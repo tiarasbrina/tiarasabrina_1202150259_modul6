@@ -1,0 +1,68 @@
+package com.example.tiarasabrina.tiarasabrina_1202150259_modul6;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+
+public class homeuser extends Fragment {
+
+    DatabaseReference ref; //membuat varuable dari databasereference
+    AdapterPost adapter;//membuat varuable
+    ArrayList<DBPost> list; //membuat varuable
+    RecyclerView rc;//membuat varuable
+
+    public homeuser() {
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        //Inisialisasi semua objek pada database
+        View v = inflater.inflate(R.layout.f_homeuser, container, false); //menyyeting inflater
+        ref = FirebaseDatabase.getInstance().getReference().child("post"); //menyetting firebase
+        list = new ArrayList<>(); //membuat array
+        adapter = new AdapterPost(list, this.getContext()); //menyetting adapter
+        rc = v.findViewById(R.id.rchomeuser); //menemukan id
+
+        //Menampilkan recyclerview
+        rc.setHasFixedSize(true);
+        rc.setLayoutManager(new GridLayoutManager(getContext(),2));
+        rc.setAdapter(adapter);
+
+        //Event listener ketika data pada Firebase berubah
+        ref.addValueEventListener(new ValueEventListener() {
+            //Digunakan untuk membaca postingan user dari Firebase
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    DBPost cur = data.getValue(DBPost.class);
+                    if(cur.getUser().equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())){
+                        cur.setKey(data.getKey());
+                        list.add(cur);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        return v;
+    }
+}
